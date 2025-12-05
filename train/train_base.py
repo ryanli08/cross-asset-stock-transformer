@@ -1,32 +1,16 @@
-import argparse
 import yaml
 import torch
-import numpy as np
-import matplotlib.pyplot as plt
+import argparse
+import pandas as pd
 from pathlib import Path
 from torch.utils.data import DataLoader
-from train.dataloaders import MultiAssetDataset
+
 from models.registry import get_model
+from data.dataset import MarketDataset, split_by_date
 
 def load_config(path):
     with open(path, "r") as f:
         return yaml.safe_load(f)
-
-def plot_loss_curves(train_losses, val_losses, model_name, save_dir="results"):
-    output_dir = Path(save_dir) / model_name
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    plt.figure(figsize=(10, 6))
-    plt.plot(train_losses, label="Train Loss", linewidth=2)
-    plt.plot(val_losses, label="Val Loss", linewidth=2)
-    plt.xlabel("Epoch")
-    plt.ylabel("Loss")
-    plt.title("Training and Validation Loss Curves")
-    plt.legend()
-    plt.grid(True, alpha=0.3)
-    plt.tight_layout()
-    plt.savefig(output_dir / "loss_curves.png", dpi=150)
-    plt.close()
 
 def get_train_loss(model, loader, optimizer, criterion, device):
     model.train()
@@ -58,25 +42,24 @@ def get_val_loss(model, loader, criterion, device):
 
 def run_training(cfg):
     #load data
-    X = np.load(cfg["data"]["x_path"])
-    y = np.load(cfg["data"]["y_path"])
-    N, A, W, F = X.shape
+    df = pd.read_csv(cfg["data"]["path"], index_col=0, parse_dates=True)
+    target_cols = [c for c in df.columns if c.endswith("_ret_1d")]
 
-    #split data
-    train_ratio = cfg["data"]["train_ratio"]
-    val_ratio = cfg["data"]["val_ratio"]
+    train_df, val_df, test_df = split_by_date(
+        df,
+        cfg["data"]["train_start"],
+        cfg["data"]["train_end"],
+        cfg["data"]["val_end"],
+        cfg["data"].get("test_end", None)
+    )
 
-    train_end = int(N * train_ratio)
-    val_end = int(N * (train_ratio + val_ratio))
-
-    X_train, y_train = X[:train_end], y[:train_end]
-    X_val, y_val = X[train_end:val_end], y[train_end:val_end]
-    X_test, y_test = X[val_end:], y[val_end:]
-
-    #create datasets and loads 
-    train_ds = MultiAssetDataset(X_train, y_train)
-    val_ds = MultiAssetDataset(X_val, y_val)
-    test_ds = MultiAssetDataset(X_test, y_test)
+    #create datasets and loaders
+    window = cfg["training"]["window"]
+    horizon = cfg["training"]["horizon"]
+    
+    train_ds = MarketDataset(train_df, window_size=window, horizon=horizon, target_cols=target_cols)
+    val_ds = MarketDataset(val_df, window_size=window, horizon=horizon, target_cols=target_cols)
+    test_ds = MarketDataset(test_df, window_size=window, horizon=horizon, target_cols=target_cols)
 
     batch_size = cfg["training"]["batch_size"]
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
@@ -84,10 +67,13 @@ def run_training(cfg):
     test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False)
 
     #model init
+    num_features = train_ds.num_features
+    num_targets = train_ds.num_targets
+    
     model_cls = get_model(cfg["model"]["name"])
     model = model_cls(
-        num_features=F,
-        num_assets=A,
+        num_features=num_features,
+        num_targets=num_targets,
         **{k: v for k, v in cfg["model"].items() if k != "name"}
     )
 
@@ -131,8 +117,6 @@ def run_training(cfg):
     checkpoint = torch.load(best_path, map_location=device)
     model.load_state_dict(checkpoint["model_state_dict"])
 
-    plot_loss_curves(train_loss_history, val_loss_history, cfg["model"]["name"])
-
     test_loss = get_val_loss(model, test_loader, criterion, device)
     print(f"Test loss: {test_loss:.6f}")
 
@@ -143,3 +127,4 @@ if __name__ == "__main__":
 
     cfg = load_config(args.config)
     run_training(cfg)
+
