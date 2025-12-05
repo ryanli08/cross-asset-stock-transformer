@@ -1,0 +1,22 @@
+name: cross-asset-stock-transformer
+channels:
+  - pytorch
+  - defaults
+dependencies:
+  - python=3.10
+  - pytorch<=2.6.0
+  - torchvision
+  - jupyter
+  - pyyaml
+  - matplotlib
+  - tqdm
+  - numpy<2.0
+  - pandas
+  - pandas-datareader
+  - seaborn
+  - scikit-learn
+  - scipy
+  - pyyaml
+  - pip
+  - pip:
+    - notebook
