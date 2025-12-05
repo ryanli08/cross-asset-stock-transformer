@@ -6,7 +6,7 @@ from pathlib import Path
 from torch.utils.data import DataLoader
 
 from models.registry import get_model
-from data.dataset import MarketDataset, split_by_date
+from train.dataloaders import MarketDataset, train_val_test_split
 
 def load_config(path):
     with open(path, "r") as f:
@@ -45,12 +45,12 @@ def run_training(cfg):
     df = pd.read_csv(cfg["data"]["path"], index_col=0, parse_dates=True)
     target_cols = [c for c in df.columns if c.endswith("_ret_1d")]
 
-    train_df, val_df, test_df = split_by_date(
+    train_df, val_df, test_df = train_val_test_split(
         df,
         cfg["data"]["train_start"],
         cfg["data"]["train_end"],
         cfg["data"]["val_end"],
-        cfg["data"].get("test_end", None)
+        cfg["data"]["test_end"]
     )
 
     #create datasets and loaders
