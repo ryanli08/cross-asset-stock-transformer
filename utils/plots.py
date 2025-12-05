@@ -4,6 +4,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+def _calc_directional_accuracy(predictions, target_labels, tickers):
+    directional_accuracy = []
+    for i in range(len(tickers)):
+        target_labels_up = target_labels[:, i] > 0
+        predictions_up   = predictions[:, i] > 0
+        directional_accuracy.append((target_labels_up == predictions_up).mean())
+    return directional_accuracy
+
 def loss_curves_plot(train_loss_history, val_loss_history, save_dir):
     save_dir = Path(save_dir)
     file_name = save_dir / "loss_curves.png"
@@ -82,7 +90,7 @@ def distribution_comparison_plot(predictions, target_labels, save_dir):
     # https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.hist.html
     plt.figure(figsize=(7, 5))
     plt.title("Distribution: Actual vs Predicted Returns")
-    plt.hist(target_labels.flattent(), bins=80, alpha=0.5, label="Actual", density=True)
+    plt.hist(target_labels.flatten(), bins=80, alpha=0.5, label="Actual", density=True)
     plt.hist(predictions.flatten(), bins=80, alpha=0.5, label="Predicted", density=True)
     plt.legend()
     plt.tight_layout()
@@ -116,5 +124,23 @@ def timeseries_plot(predictions, target_labels, tickers, save_dir):
     plt.tight_layout()
     plt.savefig(file_name)
     plt.close()
+
+def create_common_plots(predictions, target_labels, tickers, save_dir):
+    scatter_plot(predictions, target_labels, save_dir)
+    error_histogram_plot(predictions, target_labels, save_dir)
+
+    target_labels_std = target_labels.std(axis=0)
+    predictions_std = predictions.std(axis=0)
+    std_comparison_plot(predictions_std, target_labels_std, tickers, save_dir)
+    
+    directional_accuracy = _calc_directional_accuracy(predictions, target_labels, tickers)
+    directional_accuracy_plot(directional_accuracy, tickers, save_dir)
+    
+    distribution_comparison_plot(predictions, target_labels, save_dir)
+    
+    timeseries_plot(predictions, target_labels, tickers, save_dir)
+
+    return target_labels_std, predictions_std, directional_accuracy
+
 
     
