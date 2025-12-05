@@ -1,6 +1,8 @@
 from pathlib import Path
+from scipy.ndimage import uniform_filter1d
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 def loss_curves_plot(train_loss_history, val_loss_history, save_dir):
     save_dir = Path(save_dir)
@@ -97,6 +99,32 @@ def distribution_comparison_plot(predictions, target_labels, save_dir):
     plt.savefig(file_name)
     plt.close()
 
+def timeseries_plot(predictions, target_labels, tickers, save_dir):
+    try:
+        spy_idx = tickers.index("AAPL")
+    except:
+        spy_idx = 0
+    ticker = tickers[spy_idx]
 
+    save_dir = Path(save_dir)
+    file_name = save_dir / f"timeseries_{ticker}.png"
+
+    plt.figure(figsize=(12, 4))
+    plt.plot(target_labels[:, spy_idx], label="Actual", alpha=0.8)
+
+    # https://docs.scipy.org/doc/scipy-1.16.1/reference/generated/scipy.ndimage.uniform_filter1d.html
+    window_size = 20
+    target_labels_ma = uniform_filter1d(target_labels[:, spy_idx], window_size, mode='nearest')
+    plt.plot(target_labels_ma, label=f"Actual (Uniform MA - {window_size})", color="green")
+
+    # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.rolling.html
+    target_labels_casual_ma = pd.Series(target_labels[:, spy_idx]).rolling(window_size, min_periods=1).mean().values 
+    plt.plot(target_labels_casual_ma, label=f"Actual (Causal Rolling MA - {window_size})", color="purple")
+    plt.plot(predictions[:, spy_idx], label="Predicted", alpha=0.8, color="orange")
+    plt.title(f"{ticker} — Time Series Comparison")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(file_name)
+    plt.close()
 
     
