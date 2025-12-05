@@ -1,5 +1,6 @@
 from pathlib import Path
 import matplotlib.pyplot as plt
+import numpy as np
 
 def loss_curves_plot(train_loss_history, val_loss_history, save_dir):
     save_dir = Path(save_dir)
@@ -41,4 +42,23 @@ def error_histogram_plot(predictions, target_labels, save_dir):
     plt.tight_layout()
     plt.savefig(file_name)
     plt.close()
+
+def std_comparison_plot(predictions, target_labels, tickers, save_dir):
+    save_dir = Path(save_dir)
+    file_name = save_dir / "std_comparison.png"
+    # https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.bar.html
+    plt.figure(figsize=(10, 5))
+    plt.title("Std Comparison (Collapse Check)")
+    x = np.arange(len(tickers))
+    plt.bar(x - 0.3, target_labels.std(axis=0), width=0.3, label="Actual Std")
+    plt.bar(x + 0.3, predictions.std(axis=0), width=0.3, label="Predicted Std")
+    step = max(1, len(tickers) // 40)
+    plt.xticks(x[::step], tickers[::step], rotation=70, fontsize=7)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(file_name)
+    plt.close()
+
+    return predictions.std(axis=0), target_labels.std(axis=0)
+
     
