@@ -24,7 +24,6 @@ def merge_and_align_ticker_data(dfs):
 
 # Normalize prices
 def normalize_features(df, start_date, end_date):
-    df = merge_and_align_ticker_data(df)
     training_data = df.loc[start_date:end_date]
     #https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html
     scaler = StandardScaler().fit(training_data.values)
