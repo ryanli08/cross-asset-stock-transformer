@@ -61,4 +61,42 @@ def std_comparison_plot(predictions, target_labels, tickers, save_dir):
 
     return predictions.std(axis=0), target_labels.std(axis=0)
 
+def directional_accuracy_plot(predictions, target_labels, tickers, save_dir):
+    save_dir = Path(save_dir)
+    file_name = save_dir / "directional_accuracy.png"
+    directional_accuracy = []
+    for i in range(len(tickers)):
+        target_labels_up = target_labels[:, i] > 0
+        predictions_up   = predictions[:, i] > 0
+        directional_accuracy.append((target_labels_up == predictions_up).mean())
+
+    # https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.bar.html
+    plt.figure(figsize=(12, 5))
+    plt.title("Directional Accuracy Per Ticker")
+    plt.bar(tickers, directional_accuracy)
+    step = max(1, len(tickers) // 40)
+    x = np.arange(len(tickers))
+    plt.xticks(x[::step], tickers[::step], rotation=70, fontsize=7)
+    plt.ylim(0.4, 0.7)
+    plt.tight_layout()
+    plt.savefig(file_name)
+    plt.close()
+
+    return directional_accuracy
+
+def distribution_comparison_plot(predictions, target_labels, save_dir):
+    save_dir = Path(save_dir)
+    file_name = save_dir / "distribution_comparison.png"
+    # https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.hist.html
+    plt.figure(figsize=(7, 5))
+    plt.title("Distribution: Actual vs Predicted Returns")
+    plt.hist(target_labels.flattent(), bins=80, alpha=0.5, label="Actual", density=True)
+    plt.hist(predictions.flatten(), bins=80, alpha=0.5, label="Predicted", density=True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(file_name)
+    plt.close()
+
+
+
     
