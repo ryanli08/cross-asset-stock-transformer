@@ -45,15 +45,15 @@ def error_histogram_plot(predictions, target_labels, save_dir):
     plt.savefig(file_name)
     plt.close()
 
-def std_comparison_plot(predictions, target_labels, tickers, save_dir):
+def std_comparison_plot(predictions_std, target_labels_std, tickers, save_dir):
     save_dir = Path(save_dir)
     file_name = save_dir / "std_comparison.png"
     # https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.bar.html
     plt.figure(figsize=(10, 5))
     plt.title("Std Comparison (Collapse Check)")
     x = np.arange(len(tickers))
-    plt.bar(x - 0.3, target_labels.std(axis=0), width=0.3, label="Actual Std")
-    plt.bar(x + 0.3, predictions.std(axis=0), width=0.3, label="Predicted Std")
+    plt.bar(x - 0.3, target_labels_std, width=0.3, label="Actual Std")
+    plt.bar(x + 0.3, predictions_std, width=0.3, label="Predicted Std")
     step = max(1, len(tickers) // 40)
     plt.xticks(x[::step], tickers[::step], rotation=70, fontsize=7)
     plt.legend()
@@ -61,17 +61,9 @@ def std_comparison_plot(predictions, target_labels, tickers, save_dir):
     plt.savefig(file_name)
     plt.close()
 
-    return predictions.std(axis=0), target_labels.std(axis=0)
-
-def directional_accuracy_plot(predictions, target_labels, tickers, save_dir):
+def directional_accuracy_plot(directional_accuracy, tickers, save_dir):
     save_dir = Path(save_dir)
     file_name = save_dir / "directional_accuracy.png"
-    directional_accuracy = []
-    for i in range(len(tickers)):
-        target_labels_up = target_labels[:, i] > 0
-        predictions_up   = predictions[:, i] > 0
-        directional_accuracy.append((target_labels_up == predictions_up).mean())
-
     # https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.bar.html
     plt.figure(figsize=(12, 5))
     plt.title("Directional Accuracy Per Ticker")
@@ -83,8 +75,6 @@ def directional_accuracy_plot(predictions, target_labels, tickers, save_dir):
     plt.tight_layout()
     plt.savefig(file_name)
     plt.close()
-
-    return directional_accuracy
 
 def distribution_comparison_plot(predictions, target_labels, save_dir):
     save_dir = Path(save_dir)
