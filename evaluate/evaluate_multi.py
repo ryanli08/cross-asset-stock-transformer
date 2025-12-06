@@ -70,11 +70,11 @@ def _run_evaluation(config_path):
     predictions = torch.cat(predictions_list, dim=0).numpy()
     target_labels = torch.cat(target_labels_list, dim=0).numpy()
 
-    save_dir = Path("results") / "multi_asset" / model_name
-    save_dir.mkdir(parents=True, exist_ok=True)
+    results_dir = Path("results") / model_name
+    results_dir.mkdir(parents=True, exist_ok=True)
     tickers = np.load(cfg["data"]["tickers_path"])
 
-    target_labels_std, predictions_std, directional_accuracy  = plots.create_common_plots( predictions,target_labels, tickers, save_dir)
+    target_labels_std, predictions_std, directional_accuracy  = plots.create_common_plots( predictions,target_labels, tickers, results_dir)
 
     mse = np.mean((predictions - target_labels) ** 2)
     # https://numpy.org/doc/stable/reference/generated/numpy.corrcoef.html#numpy-corrcoef
@@ -83,7 +83,7 @@ def _run_evaluation(config_path):
     print(f"MSE:                  {mse:.6f}")
     print(f"Mean Corr:            {corr:.4f}")
     print(f"Directional Accuracy: {np.mean(directional_accuracy):.4f}")
-    print(f"Plots saved in: {save_dir}")
+    print(f"Plots saved in: {results_dir}")
 
     df_metrics = pd.DataFrame({
         "ticker": tickers,
@@ -93,7 +93,7 @@ def _run_evaluation(config_path):
         "pred_std": predictions_std,
         "true_std": target_labels_std
     })
-    df_metrics.to_csv(save_dir / "metrics.csv", index=False)
+    df_metrics.to_csv(results_dir / "metrics.csv", index=False)
 
 
 if __name__ == "__main__":
