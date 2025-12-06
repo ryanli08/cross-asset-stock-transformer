@@ -128,6 +128,8 @@ def run_training(cfg):
     test_loss = get_val_loss(model, test_loader, criterion, device)
     print(f"Test loss: {test_loss:.6f}")
     print(f"\nTraining time: {difference_in_time:.2f} minutes")
+    results_dir = Path("results") / cfg["model"]["name"]
+    results_dir.mkdir(parents=True, exist_ok=True)
     plots.loss_curves_plot(train_loss_history, val_loss_history, save_dir=results_dir)
 
 if __name__ == "__main__":
