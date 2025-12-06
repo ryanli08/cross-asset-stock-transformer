@@ -176,13 +176,6 @@ def save_multi_dataset():
     return X_final, y_final, model_ready_tickers, common_features
 
 
-def split_by_date(df, train_start, train_end, val_end, test_end=None):
-    train_df = df.loc[train_start:train_end]
-    val_df = df.loc[train_end:val_end]
-    test_df = df.loc[val_end:test_end] if test_end else df.loc[val_end:]
-    return train_df, val_df, test_df
-
-
 if __name__ == "__main__":
     print("Installing base dataset...")
     df = build_base_dataset()
