@@ -3,6 +3,7 @@ from scipy.ndimage import uniform_filter1d
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 
 def _calc_directional_accuracy(predictions, target_labels, tickers):
     directional_accuracy = []
@@ -124,6 +125,91 @@ def timeseries_plot(predictions, target_labels, tickers, save_dir):
     plt.tight_layout()
     plt.savefig(file_name)
     plt.close()
+
+def attention_heatmap(attention, tickers, title, save_path):
+    plt.figure(figsize=(12, 10))
+    plt.title(title, fontsize=16)
+    # https://seaborn.pydata.org/generated/seaborn.heatmap.html
+    sns.heatmap(
+        attention,
+        xticklabels=tickers,
+        yticklabels=tickers,
+        cmap="viridis",
+        cbar_kws={"label": "Attention Weight"},
+        square=True,
+    )
+    plt.xlabel("Attended To (Keys)", fontsize=12)
+    plt.ylabel("Attending From (Queries)", fontsize=12)
+    plt.xticks(rotation=70, ha="right", fontsize=7)
+    plt.yticks(rotation=0, fontsize=7)
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300, bbox_inches="tight")
+    plt.close()
+
+def head_heatmaps(attention_heads, tickers, save_dir, title_prefix):
+    H = attention_heads.shape[0]
+    for h in range(H):
+        title = f"{title_prefix} — Head {h}"
+        path = save_dir / f"real_cross_attention_head{h}.png"
+        attention_heatmap(attention_heads[h], tickers, title, path)
+
+def stock_sector_attention_heatmap(attention, tickers, save_dir):
+    save_dir = Path(save_dir)
+    file_name = save_dir / "real_stock_to_sector_attention.png"
+    sector_etfs = {"XLE", "XLF", "XLK", "XLY"} 
+    sector_indices = [i for i, t in enumerate(tickers) if t in sector_etfs]
+    stock_indices = [i for i, t in enumerate(tickers) if t not in sector_etfs]
+
+    if not sector_indices or not stock_indices:
+        print("Skipping due to missing data")
+        return
+
+    if len(stock_indices) > 30:
+        np.random.seed(42)
+        stock_indices = np.random.choice(stock_indices, 35, replace=False).tolist()
+
+    stock_to_sector = attention[np.ix_(stock_indices, sector_indices)]
+    stock_names = [tickers[i] for i in stock_indices]
+    sector_names = [tickers[i] for i in sector_indices]
+
+    plt.figure(figsize=(8, 12))
+    plt.title("Stock-to-Sector Attention", fontsize=16)
+    # https://seaborn.pydata.org/generated/seaborn.heatmap.html
+    sns.heatmap(
+        stock_to_sector,
+        xticklabels=sector_names,
+        yticklabels=stock_names,
+        cmap="viridis",
+        cbar_kws={"label": "Attention Weight"},
+        annot=True,
+        fmt=".3f",
+    )
+    plt.xlabel("Sector ETFs", fontsize=12)
+    plt.ylabel("Individual Stocks", fontsize=12)
+    plt.tight_layout()
+    plt.savefig(file_name, dpi=300, bbox_inches="tight")
+    plt.close()
+
+def clustered_attention_attention(attention, tickers, save_dir):
+    save_dir = Path(save_dir)
+    file_name = save_dir / "real_cross_attention_clustered.png"
+    # https://seaborn.pydata.org/generated/seaborn.clustermap.html
+    cg = sns.clustermap(
+        attention,
+        row_cluster=True,
+        col_cluster=True,
+        row_linkage=None,
+        col_linkage=None,
+        xticklabels=tickers,
+        yticklabels=tickers,
+        cmap="viridis",
+        figsize=(12, 12),
+    )
+    cg.figure.suptitle("Clustered Cross-Asset Attention", fontsize=16)
+    cg.figure.tight_layout()
+    cg.figure.subplots_adjust(top=0.93)
+    cg.savefig(file_name, dpi=300, bbox_inches="tight")
+    plt.close(cg.figure)
 
 def create_common_plots(predictions, target_labels, tickers, save_dir):
     scatter_plot(predictions, target_labels, save_dir)
