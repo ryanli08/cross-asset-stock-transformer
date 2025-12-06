@@ -1,0 +1,13 @@
+data/processed/aligned.csv
+data/processed/features.csv
+data/processed/multi_X.npy
+data/processed/multi_y.npy
+data/processed/multi_tickers.npy
+
+data/raw/*
+data/external/
+*.csv
+
+checkpoints/*
+results/*
+experiments/*
