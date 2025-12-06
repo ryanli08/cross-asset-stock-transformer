@@ -1,6 +1,7 @@
 data:
   x_path: "data/processed/multi_X.npy"
   y_path: "data/processed/multi_y.npy"
+  tickers_path: data/processed/multi_tickers.npy
   train_ratio: 0.70
   val_ratio: 0.15
 
