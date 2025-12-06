@@ -1,0 +1,14 @@
+numpy<2.0
+torch<=2.6.0
+torchvision
+pandas
+pandas-datareader
+scikit-learn
+scipy
+matplotlib
+seaborn
+tqdm
+PyYAML
+jupyter
+notebook
+
