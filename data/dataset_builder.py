@@ -20,10 +20,57 @@ def build_base_dataset():
     aligned_data.to_csv(aligned_path)
     
     enhanced_data = add_features(aligned_data)
-    features_path = output_path / "features.csv"
+    features_path = output_path / "features_raw.csv"
     enhanced_data.to_csv(features_path)
 
-    return enhanced_data
+    df = enhanced_data.copy()
+    if "date" in df.columns:
+        df = df.set_index("date")
+    df = df.sort_index()
+
+    ticker_feature_map = {}
+    for col in df.columns:
+        if "_" not in col:
+            continue
+        ticker_symbol, feature_name = col.split("_", 1)
+        ticker_feature_map.setdefault(ticker_symbol, {})[feature_name] = col
+
+    all_tickers = sorted(ticker_feature_map.keys())
+
+    excluded_features = {"ret_1d", "open", "high", "low"}
+    common_features = None
+
+    for ticker in all_tickers:
+        usable = {f for f in ticker_feature_map[ticker] if f not in excluded_features}
+        if common_features is None:
+            common_features = usable
+        else:
+            common_features = common_features & usable
+
+    common_features = sorted(common_features)
+
+    model_ready_tickers = []
+    for ticker in all_tickers:
+        has_all = all(f in ticker_feature_map[ticker] for f in common_features)
+        has_ret = "ret_1d" in ticker_feature_map[ticker]
+        if has_all and has_ret:
+            model_ready_tickers.append(ticker)
+
+    normalized_df = df.copy()
+    epsilon = 1e-8
+
+    for ticker in model_ready_tickers:
+        feature_columns = [ticker_feature_map[ticker][feat] for feat in common_features]
+        subset = normalized_df[feature_columns]
+        normalized_df[feature_columns] = (
+            (subset - subset.mean()) /
+            (subset.std(ddof=0) + epsilon)
+        )
+
+    norm_path = output_path / "features.csv"
+    normalized_df.to_csv(norm_path)
+
+    return normalized_df
 
 
 def build_multi_dataset(df, window=60):
@@ -75,7 +122,6 @@ def build_multi_dataset(df, window=60):
             (ticker_subset - ticker_subset.mean()) / 
             (ticker_subset.std(ddof=0) + epsilon)
         )
-    
 
     return_columns = [ticker_feature_map[ticker]["ret_1d"] 
                      for ticker in model_ready_tickers]
@@ -128,6 +174,7 @@ def save_multi_dataset():
     np.save(output_path / "multi_tickers.npy", np.array(model_ready_tickers))
     
     return X_final, y_final, model_ready_tickers, common_features
+
 
 if __name__ == "__main__":
     print("Installing base dataset...")
