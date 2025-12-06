@@ -2,11 +2,17 @@ import yaml
 import torch
 import argparse
 import pandas as pd
+import sys
+from datetime import datetime
 from pathlib import Path
 from torch.utils.data import DataLoader
 
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from evaluate.evaluate_base import evaluate
 from models.registry import get_model
 from train.dataloaders import MarketDataset, train_val_test_split
+from utils import plots
 
 def load_config(path):
     with open(path, "r") as f:
@@ -94,6 +100,7 @@ def run_training(cfg):
     train_loss_history = []
     val_loss_history = []
 
+    timestamp1 = datetime.now()
     #training loop
     for epoch in range(1, cfg["training"]["epochs"] + 1):
         train_loss = get_train_loss(model, train_loader, optimizer, criterion, device)
@@ -114,11 +121,22 @@ def run_training(cfg):
                 print("Patience exceeded")
                 break
 
+    timestamp2 = datetime.now()
+    difference_in_time = (timestamp2 - timestamp1).total_seconds() / 60
+
     checkpoint = torch.load(best_path, map_location=device)
     model.load_state_dict(checkpoint["model_state_dict"])
 
     test_loss = get_val_loss(model, test_loader, criterion, device)
     print(f"Test loss: {test_loss:.6f}")
+    print(f"\nTraining time: {difference_in_time:.2f} minutes")
+
+    results_dir = Path("results") / cfg["model"]["name"]
+    results_dir.mkdir(parents=True, exist_ok=True) 
+    print (f"Evaluating")
+    plots.loss_curves_plot(train_loss_history, val_loss_history, save_dir=results_dir)
+    evaluate(model, test_loader, target_cols, save_dir=results_dir)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

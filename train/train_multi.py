@@ -3,8 +3,13 @@ import yaml
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
+import sys
+
 from pathlib import Path
 from torch.utils.data import DataLoader
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from train.dataloaders import MultiAssetDataset
 from models.registry import get_model
 

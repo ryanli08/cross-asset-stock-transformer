@@ -9,12 +9,12 @@ import yaml
 from pathlib import Path
 from torch.utils.data import DataLoader
 
-from train.dataloaders import MultiAssetDataset
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from utils import plots
 from models.registry import get_model
+from train.dataloaders import MultiAssetDataset
+from utils import plots
 
 def _load_config(path):
   with open(path, "r") as f:
@@ -23,7 +23,8 @@ def _load_config(path):
 def _run_evaluation(config_path):
     cfg = _load_config(config_path)
     model_name = cfg["model"]["name"]
-    checkpoint_path = cfg["training"]["save_dir"] / f"{model_name}_best.pt"
+    save_dir = Path(cfg["training"]["save_dir"])
+    checkpoint_path =  save_dir / f"{model_name}_best.pt"
     checkpoint = torch.load(checkpoint_path, map_location="cpu")
     x_path = cfg["data"]["x_path"]
     y_path = cfg["data"]["y_path"]
