@@ -1,0 +1,23 @@
+data:
+  x_path: "data/processed/multi_X.npy"
+  y_path: "data/processed/multi_y.npy"
+  train_ratio: 0.70
+  val_ratio: 0.15
+
+model:
+  name: "cross_asset_transformer"
+  d_model: 128
+  n_heads: 8               # ↑ more cross-asset views
+  num_temporal_layers: 2
+  num_cross_layers: 3      # ↑ deeper cross-asset block
+  dim_feedforward: 256
+  dropout: 0.20            # ↑ regularization
+  max_seq_len: 60
+
+training:
+  batch_size: 32           # keep gradient noise that helped dir acc
+  lr: 0.00001              # your chosen LR
+  epochs: 80
+  patience: 15             # give slow LR time to converge
+  save_dir: "checkpoints"
+  # not done:  In code, use AdamW with weight_decay=0.0005

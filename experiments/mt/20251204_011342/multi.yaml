@@ -1,0 +1,23 @@
+data:
+  x_path: "data/processed/multi_X.npy"
+  y_path: "data/processed/multi_y.npy"
+  train_ratio: 0.70
+  val_ratio: 0.15
+
+model:
+  name: "multi_asset_transformer_baseline"
+  d_model: 128
+  n_heads: 4
+  num_layers: 4
+  dim_feedforward: 256
+  dropout: 0.20        # ↑ regularization
+  max_seq_len: 256
+  pooling: "last"
+  use_asset_embedding: true
+
+training:
+  batch_size: 32
+  lr: 0.0005           # ↓ for more stable convergence
+  epochs: 60           # a bit more room to converge
+  patience: 10
+  save_dir: "checkpoints/multi_tf_cfg1"

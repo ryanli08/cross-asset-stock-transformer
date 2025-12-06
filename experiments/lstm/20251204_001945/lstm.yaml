@@ -1,0 +1,19 @@
+data:
+  x_path: "data/processed/multi_X.npy"
+  y_path: "data/processed/multi_y.npy"
+  tickers_path: "data/processed/multi_tickers.npy" 
+  train_ratio: 0.70
+  val_ratio: 0.15
+
+model:
+  name: "lstm_baseline"
+  hidden_dim: 128
+  num_layers: 2
+  dropout: 0.1
+
+training:
+  batch_size: 32
+  lr: 0.001
+  epochs: 50
+  patience: 8
+  save_dir: "checkpoints/lstm"

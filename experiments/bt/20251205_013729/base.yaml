@@ -1,0 +1,24 @@
+data:
+  path: "data/processed/features.csv"
+  train_start: "2012-01-01"
+  train_end:   "2019-12-31"
+  val_end:     "2021-12-31"
+  test_end:    "2024-01-01"
+
+model:
+  name: "transformer_baseline"
+  d_model: 128
+  n_heads: 8
+  num_layers: 6
+  dim_feedforward: 256
+  dropout: 0.20        # ↑ regularization
+  max_seq_len: 256
+
+training:
+  lr: 0.0005
+  batch_size: 32
+  epochs: 60
+  window: 60
+  horizon: 1
+  patience: 10
+  save_dir: "checkpoints/transformer_baseline_cfg1"
