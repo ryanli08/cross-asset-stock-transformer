@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
+from datetime import datetime
 from pathlib import Path
 from torch.utils.data import DataLoader
 
@@ -12,26 +13,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from train.dataloaders import MultiAssetDataset
 from models.registry import get_model
+from utils import plots
 
 def load_config(path):
     with open(path, "r") as f:
         return yaml.safe_load(f)
-
-def plot_loss_curves(train_losses, val_losses, model_name, save_dir="results"):
-    output_dir = Path(save_dir) / model_name
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    plt.figure(figsize=(10, 6))
-    plt.plot(train_losses, label="Train Loss", linewidth=2)
-    plt.plot(val_losses, label="Val Loss", linewidth=2)
-    plt.xlabel("Epoch")
-    plt.ylabel("Loss")
-    plt.title("Training and Validation Loss Curves")
-    plt.legend()
-    plt.grid(True, alpha=0.3)
-    plt.tight_layout()
-    plt.savefig(output_dir / "loss_curves.png", dpi=150)
-    plt.close()
 
 def get_train_loss(model, loader, optimizer, criterion, device):
     model.train()
@@ -113,6 +99,7 @@ def run_training(cfg):
     train_loss_history = []
     val_loss_history = []
 
+    timestamp1 = datetime.now()
     #training loop
     for epoch in range(1, cfg["training"]["epochs"] + 1):
         train_loss = get_train_loss(model, train_loader, optimizer, criterion, device)
@@ -133,13 +120,15 @@ def run_training(cfg):
                 print("Patience exceeded")
                 break
 
+    timestamp2 = datetime.now()
+    difference_in_time = (timestamp2 - timestamp1).total_seconds() / 60
     checkpoint = torch.load(best_path, map_location=device)
     model.load_state_dict(checkpoint["model_state_dict"])
 
-    plot_loss_curves(train_loss_history, val_loss_history, cfg["model"]["name"])
-
     test_loss = get_val_loss(model, test_loader, criterion, device)
     print(f"Test loss: {test_loss:.6f}")
+    print(f"\nTraining time: {difference_in_time:.2f} minutes")
+    plots.loss_curves_plot(train_loss_history, val_loss_history, save_dir=results_dir)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
