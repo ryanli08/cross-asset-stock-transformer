@@ -13,6 +13,14 @@ def _calc_directional_accuracy(predictions, target_labels, tickers):
         directional_accuracy.append((target_labels_up == predictions_up).mean())
     return directional_accuracy
 
+def _calc_attention_cross_norm(attention):
+    attention_cross = attention.copy()
+    np.fill_diagonal(attention_cross, 0)
+
+    row_sums = attention_cross.sum(axis=1, keepdims=True)
+    row_sums[row_sums == 0] = 1
+    return  attention_cross / row_sums
+
 def loss_curves_plot(train_loss_history, val_loss_history, save_dir):
     save_dir = Path(save_dir)
     file_name = save_dir / "loss_curves.png"
@@ -190,7 +198,7 @@ def stock_sector_attention_heatmap(attention, tickers, save_dir):
     plt.savefig(file_name, dpi=300, bbox_inches="tight")
     plt.close()
 
-def clustered_attention_attention(attention, tickers, save_dir):
+def clustered_attention(attention, tickers, save_dir):
     save_dir = Path(save_dir)
     file_name = save_dir / "real_cross_attention_clustered.png"
     # https://seaborn.pydata.org/generated/seaborn.clustermap.html
@@ -228,5 +236,33 @@ def create_common_plots(predictions, target_labels, tickers, save_dir):
 
     return target_labels_std, predictions_std, directional_accuracy
 
-
+def create_attention_plots(avg_attention, per_headwise_attention, tickers, save_dir):
+    save_dir = Path(save_dir)
     
+    attention_heatmap(
+        avg_attention,
+        tickers,
+        "Real Cross-Asset Attention (Last Layer, All Heads Averaged)",
+        save_dir / "real_cross_attention_full.png",
+    )
+
+    cross_attention_norm = _calc_attention_cross_norm(avg_attention)
+
+    stock_sector_attention_heatmap(
+        cross_attention_norm,
+        tickers,
+        save_dir,
+    )
+
+    head_heatmaps(
+        per_headwise_attention,
+        tickers,
+        save_dir,
+        "Real Cross-Asset Attention (Last Layer, Per Head)",
+    )
+
+    clustered_attention(
+        cross_attention_norm,
+        tickers,
+        save_dir,
+    )
