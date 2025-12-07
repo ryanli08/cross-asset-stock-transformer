@@ -1,0 +1,19 @@
+data:
+  x_path: "data/processed/multi_X.npy"
+  y_path: "data/processed/multi_y.npy"
+  tickers_path: "data/processed/multi_tickers.npy" 
+  train_ratio: 0.70
+  val_ratio: 0.15
+
+model:
+  name: "lstm_baseline"
+  hidden_dim: 128          # keep (good balance per literature)
+  num_layers: 3            # ↑ depth to capture richer patterns [web:169]
+  dropout: 0.2             # ↑ regularization; common for stock LSTMs [web:159]
+
+training:
+  batch_size: 32           # standard, works well for financial TS [web:167]
+  lr: 0.0005               # slightly ↓; often best ≤ 0.001 in studies [web:158]
+  epochs: 60               # a bit more room for convergence
+  patience: 8
+  save_dir: "checkpoints/lstm"
